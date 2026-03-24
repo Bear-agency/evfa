@@ -1,0 +1,50 @@
+rules_version = '2';
+
+// Разверните в Firebase Console → Firestore → Rules (или firebase deploy --only firestore:rules).
+// Удалите старый блок match /{document=**} { allow read, write: if false; } — он перекрывает доступ.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+
+      allow create: if isOwner(userId);
+
+      // Только админ может менять статус заявки (и только это поле)
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['applicationStatus']);
+
+      match /messages/{msgId} {
+        allow read: if isOwner(userId) || isAdmin();
+
+        allow create: if
+          (isOwner(userId) &&
+            request.resource.data.sender == 'user' &&
+            request.resource.data.text is string &&
+            request.resource.data.text.size() > 0 &&
+            request.resource.data.text.size() <= 4000)
+          ||
+          (isAdmin() &&
+            request.resource.data.sender == 'admin' &&
+            request.resource.data.text is string &&
+            request.resource.data.text.size() > 0 &&
+            request.resource.data.text.size() <= 4000);
+      }
+    }
+  }
+}

@@ -12,13 +12,17 @@ import { Button } from "@/components/ui/button";
 interface Step3VisaDetailsProps {
   defaultValues?: Partial<Step3FormValues>;
   onBack: () => void;
-  onNext: (data: Step3FormValues) => void;
+  onNext: (data: Step3FormValues) => void | Promise<void>;
+  isSubmitting?: boolean;
+  submitError?: string | null;
 }
 
 export function Step3VisaDetails({
   defaultValues,
   onBack,
   onNext,
+  isSubmitting = false,
+  submitError = null,
 }: Step3VisaDetailsProps) {
   const form = useForm<Step3FormValues>({
     resolver: zodResolver(step3Schema),
@@ -29,8 +33,8 @@ export function Step3VisaDetails({
     },
   });
 
-  const onSubmit = (data: Step3FormValues) => {
-    onNext(data);
+  const onSubmit = async (data: Step3FormValues) => {
+    await onNext(data);
   };
 
   const selectedVisa = form.watch("visaType") as VisaType | "";
@@ -128,11 +132,19 @@ export function Step3VisaDetails({
         )}
       </div>
 
+      {submitError && (
+        <p className="text-xs text-red-600" role="alert">
+          {submitError}
+        </p>
+      )}
+
       <div className="flex justify-between gap-3">
-        <Button type="button" variant="secondary" onClick={onBack}>
+        <Button type="button" variant="secondary" onClick={onBack} disabled={isSubmitting}>
           Назад
         </Button>
-        <Button type="submit">Продолжить</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Отправка…" : "Отправить заявку"}
+        </Button>
       </div>
     </form>
   );

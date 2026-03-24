@@ -6,10 +6,14 @@ import { Button } from "@/components/ui/button";
 
 interface SuccessScreenProps {
   onBackToStart: () => void;
+  /** Firebase Auth UID after successful registration */
+  userId?: string;
 }
 
-export function SuccessScreen({ onBackToStart }: SuccessScreenProps) {
-  const reference = `EVFA-2024-${Math.floor(10000 + Math.random() * 89999)}`;
+export function SuccessScreen({ onBackToStart, userId }: SuccessScreenProps) {
+  const reference =
+    userId ??
+    `EVFA-${Math.floor(10000 + Math.random() * 89999)}`;
 
   return (
     <div className="flex flex-col items-center gap-4 text-center">
@@ -30,8 +34,8 @@ export function SuccessScreen({ onBackToStart }: SuccessScreenProps) {
           запросы по документам будут направлены на указанный вами email.
         </p>
         <p className="text-xs text-[color:var(--muted)]">
-          Номер вашей заявки:{" "}
-          <span className="font-mono font-semibold text-[color:var(--foreground)]">
+          Идентификатор заявки:{" "}
+          <span className="break-all font-mono font-semibold text-[color:var(--foreground)]">
             {reference}
           </span>
         </p>

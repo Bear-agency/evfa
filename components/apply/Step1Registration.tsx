@@ -19,8 +19,6 @@ interface Step1RegistrationProps {
 export function Step1Registration({ defaultValues, onNext }: Step1RegistrationProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-
   const form = useForm<Step1FormValues>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
@@ -46,8 +44,6 @@ export function Step1Registration({ defaultValues, onNext }: Step1RegistrationPr
       : "Слабый";
 
   const onSubmit = (data: Step1FormValues) => {
-    setEmailSent(true);
-    console.log("Step1 submit", data);
     onNext(data);
   };
 
@@ -251,13 +247,6 @@ export function Step1Registration({ defaultValues, onNext }: Step1RegistrationPr
           </p>
         )}
       </div>
-
-      {emailSent && (
-        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
-          Email-подтверждение отправлено. Пожалуйста, проверьте почту (включая папку
-          «Спам»).
-        </div>
-      )}
 
       <div className="flex justify-end">
         <Button type="submit">Продолжить</Button>

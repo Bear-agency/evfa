@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { DM_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
+import { AppShell } from "@/components/layout/AppShell";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 
 const dmSans = DM_Sans({
   subsets: ["latin", "latin-ext"],
@@ -30,11 +30,9 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <body className={`${dmSans.variable} ${playfair.variable} antialiased`}>
-        <div className="flex min-h-screen flex-col bg-[color:var(--background)] text-[color:var(--foreground)]">
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
+        <AuthProvider>
+          <AppShell>{children}</AppShell>
+        </AuthProvider>
       </body>
     </html>
   );
