@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { getDb } from "@/lib/firebase/client";
+import { AdminCabinetPanel } from "@/components/admin/AdminCabinetPanel";
 import { ThreadChat } from "@/components/chat/ThreadChat";
 import { Button } from "@/components/ui/button";
 
@@ -12,6 +13,7 @@ export default function AdminUserChatPage() {
   const params = useParams();
   const userId = typeof params.userId === "string" ? params.userId : "";
   const [titleName, setTitleName] = useState<string>("");
+  const [targetIsAdmin, setTargetIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -28,9 +30,11 @@ export default function AdminUserChatPage() {
         role?: string;
       };
       if (data.role === "admin") {
+        setTargetIsAdmin(true);
         setTitleName("Администратор");
         return;
       }
+      setTargetIsAdmin(false);
       const r = data.registration;
       const name =
         [r?.surname, r?.name, r?.patronymic].filter(Boolean).join(" ").trim() ||
@@ -61,13 +65,18 @@ export default function AdminUserChatPage() {
           <p className="text-xs text-[rgba(245,240,232,0.45)]">{userId}</p>
         </div>
       </div>
-      <div className="min-h-0 flex-1 overflow-hidden rounded-md border border-[rgba(184,137,26,0.25)] bg-white">
-        <ThreadChat
-          threadUserId={userId}
-          perspective="admin"
-          title={titleName ? `Переписка с ${titleName}` : "Переписка"}
-          subtitle="Сообщения заявителя слева, ваши ответы справа."
-        />
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden lg:flex-row">
+        {!targetIsAdmin && (
+          <AdminCabinetPanel userId={userId} className="max-h-[min(22rem,40vh)] lg:max-h-none lg:w-[22rem] lg:shrink-0" />
+        )}
+        <div className="min-h-0 min-h-[12rem] flex-1 overflow-hidden rounded-md border border-[rgba(184,137,26,0.25)] bg-white lg:min-h-0">
+          <ThreadChat
+            threadUserId={userId}
+            perspective="admin"
+            title={titleName ? `Переписка с ${titleName}` : "Переписка"}
+            subtitle="Сообщения заявителя слева, ваши ответы справа."
+          />
+        </div>
       </div>
     </div>
   );

@@ -16,3 +16,10 @@ export interface UserDashboardProfile {
   applicationStatus: ApplicationStatus;
   email: string | null;
 }
+
+/** Данные для блока «реквизиты / сумма» в кабинете (из Firestore + расчёт). */
+export interface UserCabinetDisplay {
+  requiredAmountEur: number | null;
+  freezeDays: number;
+  requisitesText: string;
+}

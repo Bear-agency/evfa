@@ -7,8 +7,9 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { getDb } from "@/lib/firebase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { fetchUserRole } from "@/lib/auth/userRole";
+import { resolveCabinetFromUserDoc } from "@/lib/dashboard/cabinetFromUserDoc";
 import { parseApplicationStatus } from "@/lib/dashboard/statusLabels";
-import type { UserDashboardProfile } from "@/types/dashboard";
+import type { UserCabinetDisplay, UserDashboardProfile } from "@/types/dashboard";
 import { Button } from "@/components/ui/button";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardChat } from "@/components/dashboard/DashboardChat";
@@ -33,6 +34,7 @@ export function UserDashboard() {
   const router = useRouter();
   const { user, loading: authLoading, logout } = useAuth();
   const [profile, setProfile] = useState<UserDashboardProfile | null>(null);
+  const [cabinet, setCabinet] = useState<UserCabinetDisplay | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
 
@@ -61,11 +63,14 @@ export function UserDashboard() {
         if (!snap.exists()) {
           setAccessDenied(true);
           setProfile(null);
+          setCabinet(null);
           setProfileLoading(false);
           return;
         }
         setAccessDenied(false);
-        setProfile(profileFromUserData(snap.data() as Record<string, unknown>));
+        const raw = snap.data() as Record<string, unknown>;
+        setProfile(profileFromUserData(raw));
+        setCabinet(resolveCabinetFromUserDoc(raw));
         setProfileLoading(false);
       },
       () => {
@@ -110,6 +115,7 @@ export function UserDashboard() {
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
       <DashboardSidebar
         profile={profile}
+        cabinet={cabinet}
         loading={profileLoading}
         onLogout={handleLogout}
       />

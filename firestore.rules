@@ -25,9 +25,15 @@ service cloud.firestore {
 
       allow create: if isOwner(userId);
 
-      // Только админ может менять статус заявки (и только это поле)
+      // Админ: статус заявки, реквизиты и сумма в кабинете, срок заморозки (дней)
       allow update: if isAdmin() &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['applicationStatus']);
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly([
+            'applicationStatus',
+            'cabinetRequisitesText',
+            'cabinetRequiredAmountEur',
+            'freezeDays'
+          ]);
 
       match /messages/{msgId} {
         allow read: if isOwner(userId) || isAdmin();
