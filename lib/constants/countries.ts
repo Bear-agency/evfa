@@ -40,10 +40,15 @@ export const euCountriesRu: Country[] = [
 // simple full-country list stub (can be expanded later)
 export const allCountries: Country[] = [
   { code: "RU", nameRu: "Россия", nameEn: "Russia", flag: "🇷🇺" },
-  { code: "UA", nameRu: "Украина", nameEn: "Ukraine", flag: "🇺🇦" },
+  { code: "MD", nameRu: "Молдова", nameEn: "Moldova", flag: "🇲🇩" },
+  { code: "UZ", nameRu: "Узбекистан", nameEn: "Uzbekistan", flag: "🇺🇿" },
+  { code: "TJ", nameRu: "Таджикистан", nameEn: "Tajikistan", flag: "🇹🇯" },
+  { code: "KG", nameRu: "Кыргызстан", nameEn: "Kyrgyzstan", flag: "🇰🇬" },
+  { code: "AZ", nameRu: "Азербайджан", nameEn: "Azerbaijan", flag: "🇦🇿" },
   { code: "KZ", nameRu: "Казахстан", nameEn: "Kazakhstan", flag: "🇰🇿" },
   { code: "GE", nameRu: "Грузия", nameEn: "Georgia", flag: "🇬🇪" },
   { code: "AM", nameRu: "Армения", nameEn: "Armenia", flag: "🇦🇲" },
+  { code: "TM", nameRu: "Туркменистан", nameEn: "Turkmenistan", flag: "🇹🇲" },
   { code: "TR", nameRu: "Турция", nameEn: "Türkiye", flag: "🇹🇷" },
   { code: "AE", nameRu: "ОАЭ", nameEn: "United Arab Emirates", flag: "🇦🇪" },
   { code: "DE", nameRu: "Германия", nameEn: "Germany", flag: "🇩🇪" },
@@ -62,10 +67,15 @@ export const allCountries: Country[] = [
 // Международные телефонные коды (упрощённый список для используемых стран)
 export const countryPhoneCodes: Record<CountryCode, string> = {
   RU: "+7",
-  UA: "+380",
+  MD: "+373",
+  UZ: "+998",
+  TJ: "+992",
+  KG: "+996",
+  AZ: "+994",
   KZ: "+7",
   GE: "+995",
   AM: "+374",
+  TM: "+993",
   TR: "+90",
   AE: "+971",
   DE: "+49",

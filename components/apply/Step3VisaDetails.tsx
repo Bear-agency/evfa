@@ -30,7 +30,6 @@ export function Step3VisaDetails({
   });
 
   const onSubmit = (data: Step3FormValues) => {
-    console.log("Step3 submit", data);
     onNext(data);
   };
 
@@ -104,7 +103,7 @@ export function Step3VisaDetails({
         {req ? (
           <>
             <p className="mb-2 font-medium text-[color:var(--foreground)]">
-              Параметры финансового подтверждения (мок-данные)
+              Параметры финансового подтверждения
             </p>
             <ul className="space-y-1">
               <li>
@@ -124,7 +123,7 @@ export function Step3VisaDetails({
         ) : (
           <p>
             Выберите страну назначения и тип визы, чтобы увидеть требования по сумме
-            подтверждения и минимальному сроку блокировки средств (мок-данные).
+            подтверждения и минимальному сроку блокировки средств.
           </p>
         )}
       </div>

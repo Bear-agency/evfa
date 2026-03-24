@@ -19,7 +19,7 @@ export function Hero() {
       id="about"
     >
       <div className="absolute inset-0 evfa-grid opacity-50" />
-      <div className="container relative grid gap-10 py-16 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:py-20 lg:py-24">
+      <div className="container relative py-16 md:py-20 lg:py-24">
         <div className="space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -52,12 +52,12 @@ export function Hero() {
           </motion.p>
 
           <motion.div
-            className="flex flex-col gap-3"
+            className="flex max-w-xl flex-col gap-3"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.15 }}
           >
-            <Button asChild size="lg" variant="accent" className="w-full sm:w-auto">
+            <Button asChild size="lg" variant="accent" className="w-full">
               <Link href="/apply">ПОДАТЬ ЗАЯВКУ НА СЧЕТА</Link>
             </Button>
             <p className="max-w-xl text-xs leading-relaxed text-[color:var(--muted)]">
@@ -85,64 +85,6 @@ export function Hero() {
           </motion.div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, x: 24 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.15 }}
-          className="flex items-center justify-center"
-        >
-          <div className="relative w-full max-w-md rounded-2xl border border-[color:var(--border)] bg-white/90 p-6 shadow-lg">
-            <div className="mb-4 flex items-center justify-between text-xs text-[color:var(--muted)]">
-              <span>Пример выписки EVFA</span>
-              <span className="rounded-full bg-[rgba(27,58,107,0.06)] px-2 py-0.5 text-[10px] uppercase tracking-wide text-[color:var(--primary)]">
-                Sample
-              </span>
-            </div>
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-[color:var(--muted)]">Имя заявителя</span>
-                <span className="font-medium text-[color:var(--foreground)]">
-                  Ivan Petrov
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[color:var(--muted)]">Страна назначения</span>
-                <span className="font-medium text-[color:var(--foreground)]">
-                  Германия (DE)
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[color:var(--muted)]">Тип визы</span>
-                <span className="font-medium text-[color:var(--foreground)]">
-                  Студенческая
-                </span>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-[rgba(13,27,42,0.03)] p-3">
-                <div>
-                  <div className="text-[10px] uppercase tracking-wide text-[color:var(--muted)]">
-                    Сумма подтверждения
-                  </div>
-                  <div className="text-sm font-semibold text-[color:var(--foreground)]">
-                    5 000 EUR
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-wide text-[color:var(--muted)]">
-                    Срок блокировки
-                  </div>
-                  <div className="text-sm font-semibold text-[color:var(--foreground)]">
-                    90 дней
-                  </div>
-                </div>
-              </div>
-              <p className="pt-3 text-[10px] leading-relaxed text-[color:var(--muted)]">
-                Счёт открыт в соответствии с требованиями консульства. Сведения о
-                счёте могут быть направлены напрямую в консульство по официальным
-                каналам.
-              </p>
-            </div>
-          </div>
-        </motion.div>
       </div>
     </section>
   );

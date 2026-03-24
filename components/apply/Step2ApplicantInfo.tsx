@@ -40,11 +40,10 @@ export function Step2ApplicantInfo({
   });
 
   const onSubmit: SubmitHandler<Step2FormValues> = (data) => {
-    console.log("Step2 submit", data);
     onNext(data);
   };
 
-  const sendSmsMock = () => {
+  const sendSmsCode = () => {
     setSmsSent(true);
   };
 
@@ -219,7 +218,7 @@ export function Step2ApplicantInfo({
             type="button"
             variant="secondary"
             className="shrink-0"
-            onClick={sendSmsMock}
+            onClick={sendSmsCode}
           >
             Отправить код
           </Button>
@@ -232,7 +231,7 @@ export function Step2ApplicantInfo({
         {smsSent && (
           <div className="mt-2 flex flex-col gap-1 text-xs">
             <span className="text-emerald-700">
-              Код отправлен. Введите 4-значный код для подтверждения (мок).
+              Код отправлен. Введите 4-значный код для подтверждения.
             </span>
             <div className="flex gap-2">
               {Array.from({ length: 4 }).map((_, idx) => (

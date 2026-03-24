@@ -43,7 +43,7 @@ export function HowItWorks() {
           </div>
           <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-white px-3 py-1 text-xs text-[color:var(--muted)]">
             <Clock3 className="h-4 w-4 text-[color:var(--primary)]" />
-            Срок обработки: <span className="font-medium">1–5 рабочих дней</span>
+            Срок обработки: <span className="font-medium">1-3 дня</span>
           </div>
         </div>
 
