@@ -16,6 +16,7 @@ const navItems = [
 
 export function Header() {
   const pathname = usePathname();
+  const isApplyPage = pathname === "/apply";
   const [open, setOpen] = useState(false);
 
   return (
@@ -50,15 +51,24 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Button asChild variant="secondary" size="sm">
-            <Link href={pathname === "/apply" ? "/" : "/apply"}>
-              {pathname === "/apply" ? "На главную" : "Подать заявку"}
+          <Button
+            asChild
+            variant={isApplyPage ? "secondary" : "accent"}
+            size="sm"
+            className={
+              isApplyPage
+                ? ""
+                : "px-4 font-semibold uppercase tracking-[0.08em] shadow-[0_8px_20px_rgba(200,151,31,0.35)]"
+            }
+          >
+            <Link href={isApplyPage ? "/" : "/apply"}>
+              {isApplyPage ? "На главную" : "Подать заявку"}
             </Link>
           </Button>
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
-          <Button asChild variant="secondary" size="sm" className="px-3">
+          <Button asChild variant="accent" size="sm" className="px-4 font-semibold">
             <Link href="/apply">Подать заявку</Link>
           </Button>
           <Sheet open={open} onOpenChange={setOpen}>
