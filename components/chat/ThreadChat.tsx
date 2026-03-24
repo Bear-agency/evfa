@@ -2,14 +2,16 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
-  addDoc,
   collection,
+  doc,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  writeBatch,
 } from "firebase/firestore";
 import { getDb } from "@/lib/firebase/client";
+import { useAdminRequisitesSlaTimer } from "@/hooks/useAdminRequisitesSlaTimer";
 import type { ThreadMessage } from "@/types/dashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +53,12 @@ interface ThreadChatProps {
   perspective: ChatPerspective;
   title: string;
   subtitle?: string;
+  /** Напр. «Статус заявки: На рассмотрении» — под строкой subtitle. */
+  statusLine?: string;
+  /** Показать админу таймер окна 15 мин (отсчёт с первого открытия чата в сессии). */
+  showAdminRequisitesSlaTimer?: boolean;
+  /** Подсказка заявителю (напр. про задержку реквизитов). */
+  userRequisitesDelayNote?: string;
 }
 
 export function ThreadChat({
@@ -58,7 +66,14 @@ export function ThreadChat({
   perspective,
   title,
   subtitle,
+  statusLine,
+  showAdminRequisitesSlaTimer = false,
+  userRequisitesDelayNote,
 }: ThreadChatProps) {
+  const sla = useAdminRequisitesSlaTimer(
+    threadUserId,
+    perspective === "admin" && showAdminRequisitesSlaTimer
+  );
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [chatLoading, setChatLoading] = useState(true);
   const [chatError, setChatError] = useState<string | null>(null);
@@ -109,11 +124,18 @@ export function ThreadChat({
     setSendError(null);
     setSending(true);
     try {
-      await addDoc(collection(getDb(), "users", threadUserId, "messages"), {
+      const db = getDb();
+      const batch = writeBatch(db);
+      const msgRef = doc(collection(db, "users", threadUserId, "messages"));
+      batch.set(msgRef, {
         text,
         sender: perspective === "admin" ? "admin" : "user",
         createdAt: serverTimestamp(),
       });
+      batch.update(doc(db, "users", threadUserId), {
+        lastChatActivityAt: serverTimestamp(),
+      });
+      await batch.commit();
       setInput("");
     } catch {
       setSendError("Не удалось отправить сообщение.");
@@ -130,6 +152,42 @@ export function ThreadChat({
         </h2>
         {subtitle && (
           <p className="text-xs text-[color:var(--muted)]">{subtitle}</p>
+        )}
+        {statusLine && (
+          <p className="mt-1 text-xs text-[color:var(--muted)]">{statusLine}</p>
+        )}
+        {perspective === "admin" && showAdminRequisitesSlaTimer && (
+          <div
+            className={cn(
+              "mt-3 rounded-md border px-3 py-2 text-xs",
+              sla.expired
+                ? "border-amber-300/80 bg-amber-50 text-amber-950"
+                : "border-[color:rgba(27,58,107,0.2)] bg-[rgba(27,58,107,0.06)] text-[color:var(--foreground)]"
+            )}
+          >
+            <p className="font-medium text-[color:var(--foreground)]">
+              {sla.expired ? (
+                <>
+                  Окно 15 мин истекло ·{" "}
+                  <span className="tabular-nums tracking-tight">{sla.display}</span>
+                </>
+              ) : (
+                <>
+                  Осталось{" "}
+                  <span className="tabular-nums tracking-tight">{sla.display}</span>
+                </>
+              )}
+            </p>
+            <p className="mt-1 text-[10px] leading-snug text-[color:var(--muted)]">
+              Отсчёт с первого открытия этого чата в этой сессии браузера; то же время —
+              в списке пользователей.
+            </p>
+          </div>
+        )}
+        {perspective === "user" && userRequisitesDelayNote && (
+          <p className="mt-2 rounded-md border border-amber-200/90 bg-amber-50/95 px-3 py-2 text-xs leading-relaxed text-amber-950">
+            {userRequisitesDelayNote}
+          </p>
         )}
       </div>
 

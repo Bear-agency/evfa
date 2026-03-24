@@ -4,6 +4,12 @@ import { useEffect, useState, type FormEvent } from "react";
 import { deleteField, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { getDb } from "@/lib/firebase/client";
 import { resolveCabinetFromUserDoc } from "@/lib/dashboard/cabinetFromUserDoc";
+import type { ApplicationStatus } from "@/types/dashboard";
+import {
+  APPLICATION_STATUS_OPTIONS,
+  applicationStatusLabel,
+  parseApplicationStatus,
+} from "@/lib/dashboard/statusLabels";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +28,10 @@ export function AdminCabinetPanel({ userId, className }: AdminCabinetPanelProps)
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveOk, setSaveOk] = useState(false);
+  const [applicationStatus, setApplicationStatus] =
+    useState<ApplicationStatus>("submitted");
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   useEffect(() => {
     setSaveOk(false);
@@ -29,6 +39,7 @@ export function AdminCabinetPanel({ userId, className }: AdminCabinetPanelProps)
     const unsub = onSnapshot(ref, (snap) => {
       if (!snap.exists()) return;
       const raw = snap.data() as Record<string, unknown>;
+      setApplicationStatus(parseApplicationStatus(raw.applicationStatus));
       const r = resolveCabinetFromUserDoc(raw);
       setRequisites(typeof raw.cabinetRequisitesText === "string" ? raw.cabinetRequisitesText : "");
       const o = raw.cabinetRequiredAmountEur;
@@ -43,6 +54,21 @@ export function AdminCabinetPanel({ userId, className }: AdminCabinetPanelProps)
     });
     return () => unsub();
   }, [userId]);
+
+  async function handleApplicationStatusChange(next: ApplicationStatus) {
+    if (next === applicationStatus) return;
+    setStatusError(null);
+    setStatusSaving(true);
+    try {
+      await updateDoc(doc(getDb(), "users", userId), {
+        applicationStatus: next,
+      });
+    } catch {
+      setStatusError("Не удалось сохранить статус.");
+    } finally {
+      setStatusSaving(false);
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -91,7 +117,39 @@ export function AdminCabinetPanel({ userId, className }: AdminCabinetPanelProps)
         <h2 className="font-serif text-base font-semibold text-[#F5F0E8]">
           Данные в кабинете заявителя
         </h2>
-        <p className="mt-1 text-xs text-[rgba(245,240,232,0.45)]">
+        <div className="mt-3 space-y-1.5">
+          <Label
+            htmlFor={`app-status-${userId}`}
+            className="text-[rgba(245,240,232,0.75)]"
+          >
+            Статус заявки
+          </Label>
+          <select
+            id={`app-status-${userId}`}
+            className={cn(
+              "w-full rounded-md border border-[rgba(184,137,26,0.35)] bg-[rgba(10,20,40,0.9)] px-3 py-2 text-sm text-[#F5F0E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(184,137,26,0.45)]",
+              statusSaving && "opacity-60"
+            )}
+            value={applicationStatus}
+            disabled={statusSaving}
+            onChange={(e) =>
+              handleApplicationStatusChange(e.target.value as ApplicationStatus)
+            }
+            aria-label="Статус заявки"
+          >
+            {APPLICATION_STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>
+                {applicationStatusLabel(s)}
+              </option>
+            ))}
+          </select>
+          {statusError && (
+            <p className="text-xs text-red-400" role="alert">
+              {statusError}
+            </p>
+          )}
+        </div>
+        <p className="mt-3 text-xs text-[rgba(245,240,232,0.45)]">
           Реквизиты и сумма отображаются в личном кабинете. Пустая сумма — брать из типа визы в заявке.
         </p>
         {resolvedHint && (

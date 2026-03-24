@@ -14,6 +14,7 @@ export function DashboardChat({ userId }: DashboardChatProps) {
         perspective="user"
         title="Чат с EVFA"
         subtitle="Сообщения в реальном времени. Ответит специалист."
+        userRequisitesDelayNote="Реквизиты оплаты в этом чате могут прийти с задержкой до 15 минут."
       />
     </div>
   );

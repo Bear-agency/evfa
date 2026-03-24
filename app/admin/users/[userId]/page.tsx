@@ -3,8 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { getDb } from "@/lib/firebase/client";
+import {
+  applicationStatusLabel,
+  parseApplicationStatus,
+} from "@/lib/dashboard/statusLabels";
 import { AdminCabinetPanel } from "@/components/admin/AdminCabinetPanel";
 import { ThreadChat } from "@/components/chat/ThreadChat";
 import { Button } from "@/components/ui/button";
@@ -14,24 +18,26 @@ export default function AdminUserChatPage() {
   const userId = typeof params.userId === "string" ? params.userId : "";
   const [titleName, setTitleName] = useState<string>("");
   const [targetIsAdmin, setTargetIsAdmin] = useState(false);
+  const [chatStatusLabel, setChatStatusLabel] = useState<string>("");
 
   useEffect(() => {
     if (!userId) return;
-    let cancelled = false;
-    (async () => {
-      const snap = await getDoc(doc(getDb(), "users", userId));
-      if (cancelled || !snap.exists()) return;
+    const ref = doc(getDb(), "users", userId);
+    const unsub = onSnapshot(ref, (snap) => {
+      if (!snap.exists()) return;
       const data = snap.data() as {
         registration?: {
           surname?: string;
           name?: string;
           patronymic?: string;
         };
+        applicationStatus?: unknown;
         role?: string;
       };
       if (data.role === "admin") {
         setTargetIsAdmin(true);
         setTitleName("Администратор");
+        setChatStatusLabel("");
         return;
       }
       setTargetIsAdmin(false);
@@ -40,10 +46,11 @@ export default function AdminUserChatPage() {
         [r?.surname, r?.name, r?.patronymic].filter(Boolean).join(" ").trim() ||
         "Заявитель";
       setTitleName(name);
-    })();
-    return () => {
-      cancelled = true;
-    };
+      setChatStatusLabel(
+        applicationStatusLabel(parseApplicationStatus(data.applicationStatus))
+      );
+    });
+    return () => unsub();
   }, [userId]);
 
   if (!userId) {
@@ -75,6 +82,12 @@ export default function AdminUserChatPage() {
             perspective="admin"
             title={titleName ? `Переписка с ${titleName}` : "Переписка"}
             subtitle="Сообщения заявителя слева, ваши ответы справа."
+            statusLine={
+              !targetIsAdmin && chatStatusLabel
+                ? `Статус заявки: ${chatStatusLabel}`
+                : undefined
+            }
+            showAdminRequisitesSlaTimer={!targetIsAdmin}
           />
         </div>
       </div>

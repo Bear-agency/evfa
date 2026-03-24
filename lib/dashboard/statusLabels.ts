@@ -1,5 +1,13 @@
 import type { ApplicationStatus } from "@/types/dashboard";
 
+/** Порядок в селекторах админки. */
+export const APPLICATION_STATUS_OPTIONS: ApplicationStatus[] = [
+  "submitted",
+  "under_review",
+  "approved",
+  "rejected",
+];
+
 export function applicationStatusLabel(status: ApplicationStatus): string {
   switch (status) {
     case "submitted":

@@ -25,15 +25,21 @@ service cloud.firestore {
 
       allow create: if isOwner(userId);
 
-      // Админ: статус заявки, реквизиты и сумма в кабинете, срок заморозки (дней)
-      allow update: if isAdmin() &&
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly([
-            'applicationStatus',
-            'cabinetRequisitesText',
-            'cabinetRequiredAmountEur',
-            'freezeDays'
-          ]);
+      // Заявитель: только lastChatActivityAt. Админ: статус, кабинет, заморозка, lastChatActivityAt.
+      allow update: if
+        (isOwner(userId) &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['lastChatActivityAt']))
+        ||
+        (isAdmin() &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly([
+              'applicationStatus',
+              'cabinetRequisitesText',
+              'cabinetRequiredAmountEur',
+              'freezeDays',
+              'lastChatActivityAt'
+            ]));
 
       match /messages/{msgId} {
         allow read: if isOwner(userId) || isAdmin();
