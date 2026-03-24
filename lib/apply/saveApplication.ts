@@ -1,6 +1,6 @@
 import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { firebaseAuth, db, getMissingFirebaseWebEnvVars } from "@/lib/firebase/client";
+import { getDb, getFirebaseAuth, getMissingFirebaseWebEnvVarNamesForMessage } from "@/lib/firebase/client";
 import type {
   Step1RegistrationData,
   Step2ApplicantInfoData,
@@ -19,10 +19,14 @@ export async function saveNewUserApplication(
   step2: Step2ApplicantInfoData,
   step3: Step3VisaDetailsData
 ) {
-  const missingEnv = getMissingFirebaseWebEnvVars();
-  if (missingEnv.length > 0) {
+  let auth;
+  let db;
+  try {
+    auth = getFirebaseAuth();
+    db = getDb();
+  } catch {
     const err = new Error(
-      `Missing Firebase web env: ${missingEnv.join(", ")}`
+      `Missing or invalid Firebase web config (server): ${getMissingFirebaseWebEnvVarNamesForMessage()}`
     ) as Error & { code: string };
     err.code = "evfa/missing-env";
     throw err;
@@ -32,7 +36,7 @@ export async function saveNewUserApplication(
   void confirmPassword;
 
   const cred = await createUserWithEmailAndPassword(
-    firebaseAuth,
+    auth,
     step1.email,
     password
   );

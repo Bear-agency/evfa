@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase/client";
+import { getDb } from "@/lib/firebase/client";
 import { ThreadChat } from "@/components/chat/ThreadChat";
 import { Button } from "@/components/ui/button";
 
@@ -17,7 +17,7 @@ export default function AdminUserChatPage() {
     if (!userId) return;
     let cancelled = false;
     (async () => {
-      const snap = await getDoc(doc(db, "users", userId));
+      const snap = await getDoc(doc(getDb(), "users", userId));
       if (cancelled || !snap.exists()) return;
       const data = snap.data() as {
         registration?: {

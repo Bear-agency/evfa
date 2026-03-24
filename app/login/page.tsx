@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { firebaseAuth } from "@/lib/firebase/client";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { fetchUserRole } from "@/lib/auth/userRole";
 import { safeUserLoginRedirect } from "@/lib/auth/safeRedirect";
@@ -30,7 +30,7 @@ export default function LoginPage() {
         const role = await fetchUserRole(user.uid);
         if (cancelled) return;
         if (!role) {
-          await signOut(firebaseAuth);
+          await signOut(getFirebaseAuth());
           setError(
             "Профиль не найден. Сначала подайте заявку на открытие счёта на сайте."
           );
@@ -43,7 +43,7 @@ export default function LoginPage() {
         router.replace(safeUserLoginRedirect(searchParams.get("next")));
       } catch {
         if (cancelled) return;
-        await signOut(firebaseAuth);
+        await signOut(getFirebaseAuth());
         setError("Не удалось загрузить профиль. Попробуйте снова.");
       }
     })();
@@ -57,7 +57,7 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await signInWithEmailAndPassword(firebaseAuth, email, password);
+      await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
     } catch (err) {
       setError(mapAuthError(err));
     } finally {

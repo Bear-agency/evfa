@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase/client";
+import { getDb } from "@/lib/firebase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { fetchUserRole } from "@/lib/auth/userRole";
 import { parseApplicationStatus } from "@/lib/dashboard/statusLabels";
@@ -54,7 +54,7 @@ export function UserDashboard() {
 
   useEffect(() => {
     if (authLoading || !user) return;
-    const ref = doc(db, "users", user.uid);
+    const ref = doc(getDb(), "users", user.uid);
     const unsub = onSnapshot(
       ref,
       (snap) => {

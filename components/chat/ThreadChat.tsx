@@ -9,7 +9,7 @@ import {
   query,
   serverTimestamp,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase/client";
+import { getDb } from "@/lib/firebase/client";
 import type { ThreadMessage } from "@/types/dashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,7 +70,7 @@ export function ThreadChat({
 
   useEffect(() => {
     const q = query(
-      collection(db, "users", threadUserId, "messages"),
+      collection(getDb(), "users", threadUserId, "messages"),
       orderBy("createdAt", "asc")
     );
     const unsub = onSnapshot(
@@ -109,7 +109,7 @@ export function ThreadChat({
     setSendError(null);
     setSending(true);
     try {
-      await addDoc(collection(db, "users", threadUserId, "messages"), {
+      await addDoc(collection(getDb(), "users", threadUserId, "messages"), {
         text,
         sender: perspective === "admin" ? "admin" : "user",
         createdAt: serverTimestamp(),

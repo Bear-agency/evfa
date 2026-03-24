@@ -23,11 +23,11 @@ function mapSubmitError(err: unknown): string {
       const detail =
         err && typeof err === "object" && "message" in err
           ? String((err as { message: string }).message).replace(
-              /^Missing Firebase web env: /,
+              /^Missing or invalid Firebase web config \(server\): /,
               ""
             )
           : "";
-      return `В .env не заданы переменные: ${detail}. Скопируйте все шесть полей из Firebase Console → Project settings → Your apps → веб-приложение (иконка </>). После сохранения .env перезапустите сервер: npm run dev.`;
+      return `На сервере не заданы переменные: ${detail}. Скопируйте все шесть значений из Firebase Console → Project settings → Your apps → веб-приложение в переменные FIREBASE_WEB_* (.env.example). Перезапустите сервер или обновите переменные в Vercel.`;
     }
     if (code.endsWith("permission-denied")) {
       return "Доступ к базе запрещён правилами Firestore. Разрешите создание документа users/{userId} для авторизованного пользователя (совпадение uid).";
@@ -44,9 +44,9 @@ function mapSubmitError(err: unknown): string {
       case "auth/operation-not-allowed":
         return "В Firebase не включён вход по email/паролю. Включите Email/Password в Authentication → Sign-in method.";
       case "auth/invalid-api-key":
-        return "Неверный или пустой Firebase API key. Проверьте NEXT_PUBLIC_FIREBASE_* в .env и перезапустите dev-сервер.";
+        return "Неверный или пустой Firebase API key. Проверьте FIREBASE_WEB_* на сервере (.env / Vercel) и перезапустите приложение.";
       case "auth/configuration-not-found":
-        return "Конфиг Firebase не совпадает с проектом. Проверьте: (1) все шесть NEXT_PUBLIC_FIREBASE_* из одного веб-приложения в Firebase Console → Project settings; (2) projectId в .env совпадает с ID проекта в шапке консоли; (3) apiKey и appId не перепутаны с другим проектом; (4) authDomain вида your-project-id.firebaseapp.com; (5) после правок .env полностью перезапустите npm run dev.";
+        return "Конфиг Firebase не совпадает с проектом. Проверьте: (1) все шесть FIREBASE_WEB_* из одного веб-приложения в Firebase Console → Project settings; (2) projectId совпадает с ID проекта в шапке консоли; (3) apiKey и appId не перепутаны; (4) authDomain вида your-project-id.firebaseapp.com; (5) перезапустите сервер после правок .env.";
       case "unauthenticated":
         return "Запрос к Firestore без авторизации. Проверьте настройки Auth и правила Firestore.";
       case "unavailable":

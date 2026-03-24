@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { onIdTokenChanged, signOut, type User } from "firebase/auth";
-import { firebaseAuth } from "@/lib/firebase/client";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 
 interface AuthContextValue {
   user: User | null;
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onIdTokenChanged(firebaseAuth, async (nextUser) => {
+    const unsub = onIdTokenChanged(getFirebaseAuth(), async (nextUser) => {
       try {
         // Set cookie before React sees a logged-in user so middleware sees the
         // session on the next navigation (e.g. admin-login → /admin).
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       loading,
       logout: async () => {
-        await signOut(firebaseAuth);
+        await signOut(getFirebaseAuth());
       },
     }),
     [user, loading]

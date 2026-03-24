@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { firebaseAuth } from "@/lib/firebase/client";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { fetchUserRole } from "@/lib/auth/userRole";
 import { safeAdminLoginRedirect } from "@/lib/auth/safeRedirect";
@@ -34,7 +34,7 @@ export default function AdminLoginPage() {
         const role = await fetchUserRole(user.uid);
         if (cancelled) return;
         if (!role) {
-          await signOut(firebaseAuth);
+          await signOut(getFirebaseAuth());
           setError("Учётная запись не найдена в системе.");
           return;
         }
@@ -45,7 +45,7 @@ export default function AdminLoginPage() {
         router.replace(safeAdminLoginRedirect(searchParams.get("next")));
       } catch {
         if (cancelled) return;
-        await signOut(firebaseAuth);
+        await signOut(getFirebaseAuth());
         setError("Не удалось проверить права доступа.");
       }
     })();
@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await signInWithEmailAndPassword(firebaseAuth, email, password);
+        await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
     } catch (err) {
       setError(mapAuthError(err));
     } finally {

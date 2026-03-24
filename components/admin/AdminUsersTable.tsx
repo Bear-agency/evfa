@@ -10,7 +10,7 @@ import {
   query,
   updateDoc,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase/client";
+import { getDb } from "@/lib/firebase/client";
 import type { ApplicationStatus } from "@/types/dashboard";
 import {
   applicationStatusLabel,
@@ -63,7 +63,7 @@ export function AdminUsersTable() {
   const [rowErrors, setRowErrors] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
-    const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
+    const q = query(collection(getDb(), "users"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(
       q,
       (snap) => {
@@ -90,7 +90,7 @@ export function AdminUsersTable() {
     setUpdatingId(uid);
     setRowErrors((e) => ({ ...e, [uid]: null }));
     try {
-      await updateDoc(doc(db, "users", uid), { applicationStatus: status });
+      await updateDoc(doc(getDb(), "users", uid), { applicationStatus: status });
     } catch {
       setRowErrors((e) => ({
         ...e,
