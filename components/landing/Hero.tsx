@@ -58,7 +58,7 @@ export function Hero() {
             transition={{ duration: 0.6, delay: 0.15 }}
           >
             <Button asChild size="lg" variant="accent" className="w-full">
-              <Link href="/apply">ПОДАТЬ ЗАЯВКУ НА СЧЕТА</Link>
+              <Link href="/apply">Подать заявку на открытие Счета</Link>
             </Button>
             <p className="max-w-xl text-xs leading-relaxed text-[color:var(--muted)]">
               Компания не предоставляет услуги лицам, включённым в персональные
