@@ -51,7 +51,7 @@ export default function AdminUserChatPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
       <div className="flex flex-wrap items-center gap-3">
-        <Button asChild variant="secondary" size="sm">
+        <Button asChild variant="adminPanel" size="sm">
           <Link href="/admin">← К списку</Link>
         </Button>
         <div>

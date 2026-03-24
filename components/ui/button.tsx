@@ -22,6 +22,9 @@ const buttonVariants = cva(
         link: "text-[color:var(--primary)] underline-offset-4 hover:underline",
         accent:
           "bg-[color:var(--accent)] text-[color:var(--foreground)] hover:opacity-95 shadow-sm",
+        /** Light text + gold hover for buttons on dark admin UI (avoids dark-on-dark with `secondary`). */
+        adminPanel:
+          "border border-[rgba(184,137,26,0.42)] bg-[rgba(245,240,232,0.07)] text-[#F5F0E8] shadow-sm hover:bg-[rgba(184,137,26,0.28)] hover:text-[#F5F0E8] hover:border-[rgba(184,137,26,0.55)]",
       },
       size: {
         default: "h-10 px-4 py-2",
