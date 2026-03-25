@@ -22,6 +22,13 @@ export function Step2ApplicantInfo({
   onNext,
 }: Step2ApplicantInfoProps) {
   const [smsSent, setSmsSent] = useState(false);
+  const [smsSending, setSmsSending] = useState(false);
+  const [smsSendError, setSmsSendError] = useState<string | null>(null);
+  const [smsVerified, setSmsVerified] = useState(false);
+  const [smsVerifyLoading, setSmsVerifyLoading] = useState(false);
+  const [smsVerifyError, setSmsVerifyError] = useState<string | null>(null);
+
+  const [codeDigits, setCodeDigits] = useState<string[]>(["", "", "", ""]);
 
   const form = useForm<Step2FormValues>({
     resolver: zodResolver(step2Schema) as Resolver<Step2FormValues>,
@@ -40,11 +47,90 @@ export function Step2ApplicantInfo({
   });
 
   const onSubmit: SubmitHandler<Step2FormValues> = (data) => {
+    if (!smsVerified) {
+      setSmsVerifyError("Сначала подтвердите номер телефона кодом из SMS.");
+      return;
+    }
     onNext(data);
   };
 
-  const sendSmsCode = () => {
-    setSmsSent(true);
+  const sendSmsCode = async () => {
+    setSmsSendError(null);
+    setSmsVerifyError(null);
+    setSmsVerified(false);
+    if (smsSending) return;
+
+    // Валидация телефона перед отправкой SMS.
+    const isPhoneOk = await form.trigger("phone");
+    if (!isPhoneOk) return;
+
+    const phone = form.getValues("phone");
+    if (!phone) return;
+    setSmsSending(true);
+    try {
+      const res = await fetch("/api/smsaero/send-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ phone }),
+      });
+
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        throw new Error(data?.error || "Не удалось отправить SMS-код.");
+      }
+
+      setSmsSent(true);
+      setCodeDigits(["", "", "", ""]);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Не удалось отправить SMS-код.";
+      setSmsSendError(msg);
+    } finally {
+      setSmsSending(false);
+    }
+  };
+
+  const enteredCode = codeDigits.join("");
+
+  const verifySmsCode = async () => {
+    setSmsVerifyError(null);
+    if (smsVerifyLoading) return;
+    if (!enteredCode || enteredCode.length !== 4) {
+      setSmsVerifyError("Введите 4-значный код.");
+      return;
+    }
+
+    const phone = form.getValues("phone");
+    if (!phone) {
+      setSmsVerifyError("Некорректный номер телефона. Отправьте код заново.");
+      return;
+    }
+
+    setSmsVerifyLoading(true);
+    try {
+      const res = await fetch("/api/smsaero/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, code: enteredCode }),
+      });
+
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        throw new Error(data?.error || "Не удалось подтвердить код.");
+      }
+
+      setSmsVerified(true);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Не удалось подтвердить код.";
+      setSmsVerifyError(msg);
+    } finally {
+      setSmsVerifyLoading(false);
+    }
   };
 
   const countryOptions = allCountries;
@@ -219,13 +305,19 @@ export function Step2ApplicantInfo({
             variant="secondary"
             className="shrink-0"
             onClick={sendSmsCode}
+            disabled={smsSending}
           >
-            Отправить код
+            {smsSending ? "Отправка…" : "Отправить код"}
           </Button>
         </div>
         {form.formState.errors.phone && (
           <p id="phone-error" className="text-xs text-red-600">
             {form.formState.errors.phone.message}
+          </p>
+        )}
+        {smsSendError && (
+          <p className="mt-1 text-xs text-red-600" role="alert">
+            {smsSendError}
           </p>
         )}
         {smsSent && (
@@ -241,9 +333,38 @@ export function Step2ApplicantInfo({
                   maxLength={1}
                   inputMode="numeric"
                   aria-label={`Символ ${idx + 1} кода`}
+                  value={codeDigits[idx] ?? ""}
+                  onChange={(e) => {
+                    const digit = e.target.value.replace(/\D/g, "");
+                    setCodeDigits((prev) => {
+                      const next = [...prev];
+                      next[idx] = digit.slice(-1);
+                      return next;
+                    });
+                  }}
                 />
               ))}
             </div>
+
+            <div className="mt-1 flex items-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={verifySmsCode}
+                disabled={smsVerifyLoading || enteredCode.length !== 4}
+              >
+                {smsVerifyLoading ? "Проверка…" : "Подтвердить код"}
+              </Button>
+              {smsVerified && (
+                <span className="text-emerald-800">Номер подтверждён.</span>
+              )}
+            </div>
+
+            {smsVerifyError && (
+              <p className="mt-1 text-xs text-red-600" role="alert">
+                {smsVerifyError}
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -340,7 +461,13 @@ export function Step2ApplicantInfo({
         <Button type="button" variant="secondary" onClick={onBack}>
           Назад
         </Button>
-        <Button type="submit">Продолжить</Button>
+        <Button
+          type="submit"
+          disabled={!smsSent || !smsVerified}
+          title={!smsSent ? "Сначала отправьте код" : undefined}
+        >
+          Продолжить
+        </Button>
       </div>
     </form>
   );
