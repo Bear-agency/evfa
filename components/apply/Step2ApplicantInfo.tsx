@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useForm, type SubmitHandler, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { step2Schema, type Step2FormValues } from "@/lib/validations/step2";
@@ -29,6 +30,8 @@ export function Step2ApplicantInfo({
   const [emailCodeVerified, setEmailCodeVerified] = useState(false);
   const [emailCodeVerifyLoading, setEmailCodeVerifyLoading] = useState(false);
   const [emailCodeVerifyError, setEmailCodeVerifyError] = useState<string | null>(null);
+  const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+  const [pendingNextData, setPendingNextData] = useState<Step2FormValues | null>(null);
 
   const [codeDigits, setCodeDigits] = useState<string[]>(["", "", "", ""]);
 
@@ -48,28 +51,20 @@ export function Step2ApplicantInfo({
     },
   });
 
-  const onSubmit: SubmitHandler<Step2FormValues> = (data) => {
-    if (!emailCodeVerified) {
-      setEmailCodeVerifyError("Сначала подтвердите email кодом из письма.");
-      return;
-    }
-    onNext(data);
-  };
-
-  const sendEmailCode = async () => {
+  const sendEmailCode = async (): Promise<boolean> => {
     setEmailCodeSendError(null);
     setEmailCodeVerifyError(null);
     setEmailCodeVerified(false);
-    if (emailCodeSending) return;
+    if (emailCodeSending) return false;
 
     if (!approvalEmail) {
       setEmailCodeSendError("Email для подтверждения не найден. Вернитесь на шаг назад.");
-      return;
+      return false;
     }
 
     // Валидация телефона перед отправкой кода подтверждения.
     const isPhoneOk = await form.trigger("phone");
-    if (!isPhoneOk) return;
+    if (!isPhoneOk) return false;
 
     setEmailCodeSending(true);
     try {
@@ -90,13 +85,33 @@ export function Step2ApplicantInfo({
 
       setEmailCodeSent(true);
       setCodeDigits(["", "", "", ""]);
+      return true;
     } catch (e) {
       const msg =
         e instanceof Error ? e.message : "Не удалось отправить код на email.";
       setEmailCodeSendError(msg);
+      return false;
     } finally {
       setEmailCodeSending(false);
     }
+  };
+
+  const onSubmit: SubmitHandler<Step2FormValues> = async (data) => {
+    setPendingNextData(data);
+
+    if (!emailCodeSent) {
+      const sent = await sendEmailCode();
+      if (sent) {
+        setIsCodeModalOpen(true);
+      }
+      return;
+    }
+
+    if (!emailCodeVerified) {
+      setIsCodeModalOpen(true);
+      return;
+    }
+    onNext(data);
   };
 
   const enteredCode = codeDigits.join("");
@@ -130,6 +145,12 @@ export function Step2ApplicantInfo({
       }
 
       setEmailCodeVerified(true);
+      if (pendingNextData) {
+        const nextData = pendingNextData;
+        setPendingNextData(null);
+        setIsCodeModalOpen(false);
+        onNext(nextData);
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Не удалось подтвердить код.";
       setEmailCodeVerifyError(msg);
@@ -268,8 +289,8 @@ export function Step2ApplicantInfo({
 
       <div className="space-y-1.5">
         <Label htmlFor="phone">Номер телефона (с кодом страны)</Label>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-[2]">
+        <div className="flex flex-col gap-2">
+          <div className="flex w-full items-center gap-2">
             <div className="w-28">
               <select
                 className="h-10 w-full rounded-md border border-[color:var(--border)] bg-white px-2 text-sm"
@@ -305,15 +326,11 @@ export function Step2ApplicantInfo({
               />
             </div>
           </div>
-          <Button
-            type="button"
-            variant="secondary"
-            className="shrink-0"
-            onClick={sendEmailCode}
-            disabled={emailCodeSending}
-          >
-            {emailCodeSending ? "Отправка…" : "Отправить код"}
-          </Button>
+          {!emailCodeSent && (
+            <p className="text-xs text-[color:var(--muted)]">
+              Код подтверждения будет отправлен на email после нажатия «Продолжить».
+            </p>
+          )}
         </div>
         {form.formState.errors.phone && (
           <p id="phone-error" className="text-xs text-red-600">
@@ -325,53 +342,13 @@ export function Step2ApplicantInfo({
             {emailCodeSendError}
           </p>
         )}
-        {emailCodeSent && (
-          <div className="mt-2 flex flex-col gap-1 text-xs">
-            <span className="text-emerald-700">
-              Код отправлен на email {approvalEmail}. Введите 4-значный код для
-              подтверждения.
-            </span>
-            <div className="flex gap-2">
-              {Array.from({ length: 4 }).map((_, idx) => (
-                <Input
-                  key={idx}
-                  className="h-9 w-10 text-center"
-                  maxLength={1}
-                  inputMode="numeric"
-                  aria-label={`Символ ${idx + 1} кода`}
-                  value={codeDigits[idx] ?? ""}
-                  onChange={(e) => {
-                    const digit = e.target.value.replace(/\D/g, "");
-                    setCodeDigits((prev) => {
-                      const next = [...prev];
-                      next[idx] = digit.slice(-1);
-                      return next;
-                    });
-                  }}
-                />
-              ))}
-            </div>
-
-            <div className="mt-1 flex items-center gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={verifyEmailCode}
-                disabled={emailCodeVerifyLoading || enteredCode.length !== 4}
-              >
-                {emailCodeVerifyLoading ? "Проверка…" : "Подтвердить код"}
-              </Button>
-              {emailCodeVerified && (
-                <span className="text-emerald-800">Email подтвержден.</span>
-              )}
-            </div>
-
-            {emailCodeVerifyError && (
-              <p className="mt-1 text-xs text-red-600" role="alert">
-                {emailCodeVerifyError}
-              </p>
-            )}
-          </div>
+        {emailCodeSent && !emailCodeVerified && (
+          <p className="mt-1 text-xs text-[color:var(--muted)]">
+            Код отправлен на {approvalEmail}. Нажмите «Продолжить», чтобы ввести код.
+          </p>
+        )}
+        {emailCodeVerified && (
+          <p className="mt-1 text-xs text-emerald-700">Email подтвержден.</p>
         )}
       </div>
 
@@ -469,12 +446,75 @@ export function Step2ApplicantInfo({
         </Button>
         <Button
           type="submit"
-          disabled={!emailCodeSent || !emailCodeVerified}
-          title={!emailCodeSent ? "Сначала отправьте код" : undefined}
+          disabled={emailCodeSending || emailCodeVerifyLoading}
         >
-          Продолжить
+          {emailCodeSending ? "Отправка кода…" : "Продолжить"}
         </Button>
       </div>
+
+      <DialogPrimitive.Root open={isCodeModalOpen} onOpenChange={setIsCodeModalOpen}>
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[color:rgba(13,27,42,0.35)] backdrop-blur-sm" />
+          <DialogPrimitive.Content className="fixed left-1/2 top-1/2 z-50 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[color:var(--border)] bg-white p-5 shadow-lg outline-none">
+            <DialogPrimitive.Title className="text-base font-semibold">
+              Подтверждение email
+            </DialogPrimitive.Title>
+            <DialogPrimitive.Description className="mt-1 text-sm text-[color:var(--muted)]">
+              Введите 4-значный код из письма, отправленного на {approvalEmail}.
+            </DialogPrimitive.Description>
+
+            <div className="mt-4 flex gap-2">
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <Input
+                  key={idx}
+                  className="h-10 w-12 text-center"
+                  maxLength={1}
+                  inputMode="numeric"
+                  aria-label={`Символ ${idx + 1} кода`}
+                  value={codeDigits[idx] ?? ""}
+                  onChange={(e) => {
+                    const digit = e.target.value.replace(/\D/g, "");
+                    setCodeDigits((prev) => {
+                      const next = [...prev];
+                      next[idx] = digit.slice(-1);
+                      return next;
+                    });
+                  }}
+                />
+              ))}
+            </div>
+
+            {emailCodeVerifyError && (
+              <p className="mt-2 text-xs text-red-600" role="alert">
+                {emailCodeVerifyError}
+              </p>
+            )}
+            {emailCodeSendError && (
+              <p className="mt-2 text-xs text-red-600" role="alert">
+                {emailCodeSendError}
+              </p>
+            )}
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={sendEmailCode}
+                disabled={emailCodeSending || emailCodeVerifyLoading}
+              >
+                {emailCodeSending ? "Отправка…" : "Отправить код повторно"}
+              </Button>
+              <Button
+                type="button"
+                onClick={verifyEmailCode}
+                disabled={emailCodeVerifyLoading || enteredCode.length !== 4}
+              >
+                {emailCodeVerifyLoading ? "Проверка…" : "Подтвердить код"}
+              </Button>
+            </div>
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
     </form>
   );
 }
