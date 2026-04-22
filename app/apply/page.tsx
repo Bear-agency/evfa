@@ -126,6 +126,7 @@ export default function ApplyPage() {
                 {step === 2 && (
                   <Step2ApplicantInfo
                     defaultValues={step2Data ?? undefined}
+                    approvalEmail={step1Data?.email ?? ""}
                     onBack={() => setStep(1)}
                     onNext={(data) => {
                       setStep2Data(data);

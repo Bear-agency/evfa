@@ -12,21 +12,23 @@ import { allCountries, countryPhoneCodes } from "@/lib/constants/countries";
 
 interface Step2ApplicantInfoProps {
   defaultValues?: Partial<Step2FormValues>;
+  approvalEmail: string;
   onBack: () => void;
   onNext: (data: Step2FormValues) => void;
 }
 
 export function Step2ApplicantInfo({
   defaultValues,
+  approvalEmail,
   onBack,
   onNext,
 }: Step2ApplicantInfoProps) {
-  const [smsSent, setSmsSent] = useState(false);
-  const [smsSending, setSmsSending] = useState(false);
-  const [smsSendError, setSmsSendError] = useState<string | null>(null);
-  const [smsVerified, setSmsVerified] = useState(false);
-  const [smsVerifyLoading, setSmsVerifyLoading] = useState(false);
-  const [smsVerifyError, setSmsVerifyError] = useState<string | null>(null);
+  const [emailCodeSent, setEmailCodeSent] = useState(false);
+  const [emailCodeSending, setEmailCodeSending] = useState(false);
+  const [emailCodeSendError, setEmailCodeSendError] = useState<string | null>(null);
+  const [emailCodeVerified, setEmailCodeVerified] = useState(false);
+  const [emailCodeVerifyLoading, setEmailCodeVerifyLoading] = useState(false);
+  const [emailCodeVerifyError, setEmailCodeVerifyError] = useState<string | null>(null);
 
   const [codeDigits, setCodeDigits] = useState<string[]>(["", "", "", ""]);
 
@@ -47,74 +49,77 @@ export function Step2ApplicantInfo({
   });
 
   const onSubmit: SubmitHandler<Step2FormValues> = (data) => {
-    if (!smsVerified) {
-      setSmsVerifyError("Сначала подтвердите номер телефона кодом из SMS.");
+    if (!emailCodeVerified) {
+      setEmailCodeVerifyError("Сначала подтвердите email кодом из письма.");
       return;
     }
     onNext(data);
   };
 
-  const sendSmsCode = async () => {
-    setSmsSendError(null);
-    setSmsVerifyError(null);
-    setSmsVerified(false);
-    if (smsSending) return;
+  const sendEmailCode = async () => {
+    setEmailCodeSendError(null);
+    setEmailCodeVerifyError(null);
+    setEmailCodeVerified(false);
+    if (emailCodeSending) return;
 
-    // Валидация телефона перед отправкой SMS.
+    if (!approvalEmail) {
+      setEmailCodeSendError("Email для подтверждения не найден. Вернитесь на шаг назад.");
+      return;
+    }
+
+    // Валидация телефона перед отправкой кода подтверждения.
     const isPhoneOk = await form.trigger("phone");
     if (!isPhoneOk) return;
 
-    const phone = form.getValues("phone");
-    if (!phone) return;
-    setSmsSending(true);
+    setEmailCodeSending(true);
     try {
-      const res = await fetch("/api/smsaero/send-code", {
+      const res = await fetch("/api/email-verification/send-code", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ email: approvalEmail }),
       });
 
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as
           | { error?: string }
           | null;
-        throw new Error(data?.error || "Не удалось отправить SMS-код.");
+        throw new Error(data?.error || "Не удалось отправить код на email.");
       }
 
-      setSmsSent(true);
+      setEmailCodeSent(true);
       setCodeDigits(["", "", "", ""]);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Не удалось отправить SMS-код.";
-      setSmsSendError(msg);
+      const msg =
+        e instanceof Error ? e.message : "Не удалось отправить код на email.";
+      setEmailCodeSendError(msg);
     } finally {
-      setSmsSending(false);
+      setEmailCodeSending(false);
     }
   };
 
   const enteredCode = codeDigits.join("");
 
-  const verifySmsCode = async () => {
-    setSmsVerifyError(null);
-    if (smsVerifyLoading) return;
+  const verifyEmailCode = async () => {
+    setEmailCodeVerifyError(null);
+    if (emailCodeVerifyLoading) return;
     if (!enteredCode || enteredCode.length !== 4) {
-      setSmsVerifyError("Введите 4-значный код.");
+      setEmailCodeVerifyError("Введите 4-значный код.");
       return;
     }
 
-    const phone = form.getValues("phone");
-    if (!phone) {
-      setSmsVerifyError("Некорректный номер телефона. Отправьте код заново.");
+    if (!approvalEmail) {
+      setEmailCodeVerifyError("Email для подтверждения не найден. Отправьте код заново.");
       return;
     }
 
-    setSmsVerifyLoading(true);
+    setEmailCodeVerifyLoading(true);
     try {
-      const res = await fetch("/api/smsaero/verify-code", {
+      const res = await fetch("/api/email-verification/verify-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, code: enteredCode }),
+        body: JSON.stringify({ email: approvalEmail, code: enteredCode }),
       });
 
       if (!res.ok) {
@@ -124,12 +129,12 @@ export function Step2ApplicantInfo({
         throw new Error(data?.error || "Не удалось подтвердить код.");
       }
 
-      setSmsVerified(true);
+      setEmailCodeVerified(true);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Не удалось подтвердить код.";
-      setSmsVerifyError(msg);
+      setEmailCodeVerifyError(msg);
     } finally {
-      setSmsVerifyLoading(false);
+      setEmailCodeVerifyLoading(false);
     }
   };
 
@@ -304,10 +309,10 @@ export function Step2ApplicantInfo({
             type="button"
             variant="secondary"
             className="shrink-0"
-            onClick={sendSmsCode}
-            disabled={smsSending}
+            onClick={sendEmailCode}
+            disabled={emailCodeSending}
           >
-            {smsSending ? "Отправка…" : "Отправить код"}
+            {emailCodeSending ? "Отправка…" : "Отправить код"}
           </Button>
         </div>
         {form.formState.errors.phone && (
@@ -315,15 +320,16 @@ export function Step2ApplicantInfo({
             {form.formState.errors.phone.message}
           </p>
         )}
-        {smsSendError && (
+        {emailCodeSendError && (
           <p className="mt-1 text-xs text-red-600" role="alert">
-            {smsSendError}
+            {emailCodeSendError}
           </p>
         )}
-        {smsSent && (
+        {emailCodeSent && (
           <div className="mt-2 flex flex-col gap-1 text-xs">
             <span className="text-emerald-700">
-              Код отправлен. Введите 4-значный код для подтверждения.
+              Код отправлен на email {approvalEmail}. Введите 4-значный код для
+              подтверждения.
             </span>
             <div className="flex gap-2">
               {Array.from({ length: 4 }).map((_, idx) => (
@@ -350,19 +356,19 @@ export function Step2ApplicantInfo({
               <Button
                 type="button"
                 variant="secondary"
-                onClick={verifySmsCode}
-                disabled={smsVerifyLoading || enteredCode.length !== 4}
+                onClick={verifyEmailCode}
+                disabled={emailCodeVerifyLoading || enteredCode.length !== 4}
               >
-                {smsVerifyLoading ? "Проверка…" : "Подтвердить код"}
+                {emailCodeVerifyLoading ? "Проверка…" : "Подтвердить код"}
               </Button>
-              {smsVerified && (
-                <span className="text-emerald-800">Номер подтверждён.</span>
+              {emailCodeVerified && (
+                <span className="text-emerald-800">Email подтвержден.</span>
               )}
             </div>
 
-            {smsVerifyError && (
+            {emailCodeVerifyError && (
               <p className="mt-1 text-xs text-red-600" role="alert">
-                {smsVerifyError}
+                {emailCodeVerifyError}
               </p>
             )}
           </div>
@@ -463,8 +469,8 @@ export function Step2ApplicantInfo({
         </Button>
         <Button
           type="submit"
-          disabled={!smsSent || !smsVerified}
-          title={!smsSent ? "Сначала отправьте код" : undefined}
+          disabled={!emailCodeSent || !emailCodeVerified}
+          title={!emailCodeSent ? "Сначала отправьте код" : undefined}
         >
           Продолжить
         </Button>
