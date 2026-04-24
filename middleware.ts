@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
+
+// Keep in sync with lib/auth/constants.ts.
+const SESSION_COOKIE_NAME = "evfa_session";
 
 function isAdminArea(pathname: string) {
   if (pathname === "/admin-login") return false;
