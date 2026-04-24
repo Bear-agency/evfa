@@ -22,6 +22,10 @@ export const metadata: Metadata = {
   title: "EVFA — European Visa Financial Authority",
   description:
     "Финансовое подтверждение для оформления визы в страны ЕС. EVFA — European Visa Financial Authority.",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
