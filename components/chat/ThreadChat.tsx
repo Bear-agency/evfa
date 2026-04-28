@@ -205,9 +205,7 @@ export function ThreadChat({
         ) : chatLoading ? (
           <p className="text-sm text-[color:var(--muted)]">Загрузка сообщений…</p>
         ) : messages.length === 0 ? (
-          <p className="text-sm text-[color:var(--muted)]">
-            Сообщений пока нет.
-          </p>
+          <p className="text-sm text-[color:var(--muted)]">No current messages</p>
         ) : (
           messages.map((m) => {
             const outgoing = isOutgoing(perspective, m.sender);
